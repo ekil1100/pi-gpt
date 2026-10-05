@@ -43,7 +43,9 @@ jobs:
           JS
       - name: Validate publication without uploading
         if: github.event_name == 'workflow_dispatch'
-        run: npm publish --dry-run --access public
+        run: |
+          npm run prepublishOnly
+          npm pack --dry-run
       - name: Publish with OIDC
         if: github.event_name == 'push'
         run: npm publish --access public
