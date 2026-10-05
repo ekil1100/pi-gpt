@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "scaffold",
+      "name": "@likelz/pi-gpt",
       "dependencies": {
         "effect": "^3.0.0",
       },

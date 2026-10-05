@@ -6,7 +6,13 @@ Run `/fast` to toggle priority processing for an explicit list of models. The ex
 
 ## Install
 
-Install from GitHub:
+Install from npm:
+
+```sh
+pi install npm:@likelz/pi-gpt
+```
+
+Or from GitHub:
 
 ```sh
 pi install git:github.com/ekil1100/pi-gpt
