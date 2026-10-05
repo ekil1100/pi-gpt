@@ -56,6 +56,24 @@ This extension requests **priority**, preserving the original behavior. OpenAI a
 
 Sources: [Ultrafast API](https://developers.openai.com/api/docs/guides/ultrafast-mode), [Fast API](https://developers.openai.com/api/docs/guides/fast-mode), [Codex speed and eligibility](https://learn.chatgpt.com/docs/agent-configuration/speed), [Codex pricing](https://learn.chatgpt.com/docs/pricing).
 
+## Publishing
+
+[Publish to npm](https://github.com/ekil1100/pi-gpt/actions/workflows/publish.yml) uses GitHub Actions OIDC. It needs no npm token secret. Node.js 24, npm 11.19.0, and Bun 1.4.2 are configured in the workflow. The `prepublishOnly` script runs checks, tests, and the build before publishing.
+
+Configure a GitHub Actions trusted publisher in the [npm package settings](https://www.npmjs.com/package/@likelz/pi-gpt/access):
+
+| Field                | Value                                      |
+| -------------------- | ------------------------------------------ |
+| Organization or user | `ekil1100`                                 |
+| Repository           | `pi-gpt`                                   |
+| Workflow filename    | `publish.yml`                              |
+| Environment name     | Leave empty                                |
+| Allowed actions      | Allow direct publishing with `npm publish` |
+
+Run the workflow manually to check installation, validation, and tarball contents without uploading. This dry run does not verify npm's OIDC trust configuration; that is exercised by an actual release.
+
+To release, update `package.json` to a new stable version, commit and push it, then push a matching tag such as `v0.1.1`. The workflow rejects tags that do not match the package version. Version `0.1.0` is already published and cannot be republished. OIDC publishing automatically includes provenance for this public repository and package.
+
 ## Development
 
 Use Bun 1.4.2 and Vite+ 1.0.0. Development was verified on Node.js 24.
