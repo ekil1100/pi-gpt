@@ -34,11 +34,22 @@ Edit `~/.pi/agent/extensions/pi-gpt.json` (under `PI_CODING_AGENT_DIR` when over
 ```json
 {
   "enabled": false,
-  "models": ["openai/gpt-6-astra"]
+  "models": ["/[/]gpt-6-astra$/"]
 }
 ```
 
-Use the exact `provider/model` identifiers shown by Pi, including any additional slashes in a model ID. The list starts empty; add models whose endpoint supports priority processing. Restart Pi or reload extensions after editing the file.
+Entries are either exact `provider/model` identifiers or JavaScript regular expressions wrapped in `/.../` (without flags). Regex rules run against the complete identifier, including additional slashes in the model ID. They use normal regex search semantics; add `^` and `$` where you need boundaries.
+
+| Rule                | Matches                                                                          |
+| ------------------- | -------------------------------------------------------------------------------- |
+| `/[/]gpt-6-astra$/` | `openai/gpt-6-astra`, `openai-codex/gpt-6-astra`, and `magpie/codex/gpt-6-astra` |
+| `/^openai[/]gpt-/`  | GPT model IDs under the `openai` provider                                        |
+| `openai/gpt-5.4`    | Only this exact identifier                                                       |
+| `/.*/`              | Every model                                                                      |
+
+`[/]` matches a literal slash, so the first rule requires the exact final model name and excludes `gpt-6-astra-pro`. Backslashes need JSON escaping: use `"/gpt-5\\.4$/"` to match a literal dot. Plain strings remain literal; `*` has regex meaning only inside `/.../` rules. Invalid regex configuration produces a warning and starts with fast mode disabled.
+
+The list starts empty; add rules for models whose endpoints support priority processing. Restart Pi or reload extensions after editing the file.
 
 - `/fast` toggles and persists `enabled`.
 - Unlisted models and disabled mode leave requests unchanged.

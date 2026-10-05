@@ -1,6 +1,6 @@
 {
   "name": "@likelz/pi-gpt",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "GPT fast mode for Pi with explicit model allowlists.",
   "keywords": [
     "gpt",

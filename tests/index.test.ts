@@ -34,6 +34,29 @@ describe("request policy", () => {
     expect(transformRequest(active, undefined, {})).toBeUndefined();
     expect(transformRequest(emptyState(), model, {})).toBeUndefined();
   });
+  it.each([
+    ["/[/]gpt-6-astra$/", "openai", "gpt-6-astra", true],
+    ["/[/]gpt-6-astra$/", "openai-codex", "gpt-6-astra", true],
+    ["/[/]gpt-6-astra$/", "magpie", "codex/gpt-6-astra", true],
+    ["/[/]gpt-6-astra$/", "openai", "gpt-6-astra-pro", false],
+    ["/[/]gpt-6-astra$/", "openai", "other-gpt-6-astra", false],
+    ["/[/]gpt-6-(astra|sol)$/", "magpie", "codex/gpt-6-sol", true],
+    ["/^openai[/]gpt-/", "openai", "gpt-6-astra", true],
+    ["/^openai[/]gpt-/", "magpie", "gpt-6-astra", false],
+    ["/[/]gpt-5\\.4$/", "openai", "gpt-5.4", true],
+    ["/[/]gpt-5\\.4$/", "openai", "gpt-5x4", false],
+    ["openai/gpt-5.4", "openai", "gpt-5x4", false],
+    ["openai/gpt-[6]+?", "openai", "gpt-[6]+?", true],
+    ["*/gpt-6-astra", "openai", "gpt-6-astra", false],
+    ["/.*/", "magpie", "codex/gpt-6-astra", true],
+  ])("matches %s against %s/%s: %s", (pattern, provider, id, matches) => {
+    const state = decodeState(JSON.stringify({ enabled: true, models: [pattern] }));
+    expect(transformRequest(state, { provider, id }, {})).toEqual(
+      matches ? { service_tier: "priority" } : undefined,
+    );
+    expect(transformRequest({ ...state, enabled: false }, { provider, id }, {})).toBeUndefined();
+    expect(transformRequest(state, undefined, {})).toBeUndefined();
+  });
   it.each([null, [], "text", 42, undefined])("ignores invalid payload %s", (payload) => {
     expect(transformRequest(active, model, payload)).toBeUndefined();
   });
@@ -50,6 +73,19 @@ describe("state persistence", () => {
     "rejects malformed state %s",
     (text) => expect(() => decodeState(text)).toThrow(),
   );
+  it.each(["/[invalid/", "/unfinished", "//", "/gpt/i"])(
+    "rejects invalid regex rule %s",
+    (rule) => {
+      expect(() => decodeState(JSON.stringify({ enabled: true, models: [rule] }))).toThrow();
+    },
+  );
+  it("disables malformed regex configuration when loading", () => {
+    const path = join(temp(), "state.json");
+    writeFileSync(path, JSON.stringify({ enabled: true, models: ["/[/"] }));
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    expect(Effect.runSync(loadState(path))).toEqual(emptyState());
+    expect(warn).toHaveBeenCalledOnce();
+  });
   it("starts disabled when absent and round-trips state through nested directories", () => {
     const path = join(temp(), "extensions", "pi-gpt.json");
     expect(Effect.runSync(loadState(path))).toEqual(emptyState());
