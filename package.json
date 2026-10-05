@@ -1,0 +1,46 @@
+{
+  "name": "pi-gpt",
+  "version": "0.1.0",
+  "description": "GPT fast mode for Pi with explicit model allowlists.",
+  "keywords": [
+    "gpt",
+    "pi",
+    "pi-package"
+  ],
+  "files": [
+    "dist",
+    "src"
+  ],
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "scripts": {
+    "build": "vp pack",
+    "dev": "vp pack --watch",
+    "test": "vp test run",
+    "check": "vp check",
+    "prepublishOnly": "vp check && vp test run && vp pack"
+  },
+  "dependencies": {
+    "effect": "^3.0.0"
+  },
+  "devDependencies": {
+    "@earendil-works/pi-coding-agent": "1.0.2",
+    "@types/node": "^24.0.0",
+    "typescript": "^7.0.2",
+    "vite-plus": "1.0.0"
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*"
+  },
+  "packageManager": "bun@1.4.2",
+  "pi": {
+    "extensions": [
+      "./src/index.ts"
+    ]
+  }
+}
