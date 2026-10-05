@@ -3,7 +3,7 @@ import { Schema } from "effect";
 const isRegex = (rule: string): boolean => rule.startsWith("/");
 
 const isValidRule = (rule: string): boolean => {
-  if (!isRegex(rule)) return /^[^/\s]+\/[^\s]+$/.test(rule);
+  if (!isRegex(rule)) return /^[^/\s]+(?:\/[^\s]+)?$/.test(rule);
   if (rule.length < 3 || !rule.endsWith("/")) return false;
   try {
     new RegExp(rule.slice(1, -1));
@@ -18,7 +18,7 @@ export const FastModeState = Schema.Struct({
   models: Schema.Array(
     Schema.String.pipe(
       Schema.filter(isValidRule, {
-        message: () => "Expected a provider/model identifier or a valid /regex/ rule.",
+        message: () => "Expected a model name, provider/model identifier, or valid /regex/ rule.",
       }),
     ),
   ),
@@ -31,8 +31,10 @@ type Model = { readonly provider: string; readonly id: string } | undefined;
 export const modelKey = (model: Model): string | undefined =>
   model ? `${model.provider}/${model.id}` : undefined;
 
-const matchesModel = (rule: string, key: string): boolean =>
-  isRegex(rule) ? new RegExp(rule.slice(1, -1)).test(key) : rule === key;
+const matchesModel = (rule: string, key: string): boolean => {
+  if (isRegex(rule)) return new RegExp(rule.slice(1, -1)).test(key);
+  return rule === (rule.includes("/") ? key : key.slice(key.lastIndexOf("/") + 1));
+};
 
 export const isActive = (state: FastModeState, model: Model): boolean => {
   const key = modelKey(model);

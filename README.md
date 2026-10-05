@@ -34,14 +34,19 @@ Edit `~/.pi/agent/extensions/pi-gpt.json` (under `PI_CODING_AGENT_DIR` when over
 ```json
 {
   "enabled": false,
-  "models": ["/[/]gpt-6-astra$/"]
+  "models": ["gpt-6-astra"]
 }
 ```
 
-Entries are either exact `provider/model` identifiers or JavaScript regular expressions wrapped in `/.../` (without flags). Regex rules run against the complete identifier, including additional slashes in the model ID. They use normal regex search semantics; add `^` and `$` where you need boundaries.
+Entries support three forms, which can be mixed in the same list. Any matching rule enables fast mode when `enabled` is true:
+
+- **Model name** without `/`: case-sensitive, exact match against the final segment of the model identifier. `gpt-6-astra` matches across providers, including `magpie/codex/gpt-6-astra`, and excludes `gpt-6-astra-pro`.
+- **Full identifier** containing `/`: exact match against `provider/model`, including any additional model path segments.
+- **Regex** wrapped in `/.../` (without flags): JavaScript regular expression against the complete identifier. Existing regex rules keep their behavior. They use normal regex search semantics; add `^` and `$` where you need boundaries.
 
 | Rule                | Matches                                                                          |
 | ------------------- | -------------------------------------------------------------------------------- |
+| `gpt-6-astra`       | The exact final model name under any provider or path prefix                     |
 | `/[/]gpt-6-astra$/` | `openai/gpt-6-astra`, `openai-codex/gpt-6-astra`, and `magpie/codex/gpt-6-astra` |
 | `/^openai[/]gpt-/`  | GPT model IDs under the `openai` provider                                        |
 | `openai/gpt-5.4`    | Only this exact identifier                                                       |

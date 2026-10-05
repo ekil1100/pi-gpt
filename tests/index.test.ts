@@ -35,6 +35,18 @@ describe("request policy", () => {
     expect(transformRequest(emptyState(), model, {})).toBeUndefined();
   });
   it.each([
+    ["gpt-6-astra", "openai", "gpt-6-astra", true],
+    ["gpt-6-astra", "openai-codex", "gpt-6-astra", true],
+    ["gpt-6-astra", "magpie", "codex/gpt-6-astra", true],
+    ["gpt-6-astra", "proxy", "org/codex/gpt-6-astra", true],
+    ["gpt-6-astra", "openai", "gpt-6-astra-pro", false],
+    ["gpt-6-astra", "openai", "other-gpt-6-astra", false],
+    ["gpt-6-astra", "openai", "GPT-6-ASTRA", false],
+    ["gpt-5.4", "openai", "gpt-5x4", false],
+    ["gpt-*", "openai", "gpt-6-astra", false],
+    ["gpt-[6]+?", "openai", "gpt-[6]+?", true],
+    ["magpie/codex/gpt-6-astra", "magpie", "codex/gpt-6-astra", true],
+    ["codex/gpt-6-astra", "magpie", "codex/gpt-6-astra", false],
     ["/[/]gpt-6-astra$/", "openai", "gpt-6-astra", true],
     ["/[/]gpt-6-astra$/", "openai-codex", "gpt-6-astra", true],
     ["/[/]gpt-6-astra$/", "magpie", "codex/gpt-6-astra", true],
@@ -57,6 +69,22 @@ describe("request policy", () => {
     expect(transformRequest({ ...state, enabled: false }, { provider, id }, {})).toBeUndefined();
     expect(transformRequest(state, undefined, {})).toBeUndefined();
   });
+  it("combines short names, full identifiers, and regex rules", () => {
+    const state = decodeState(
+      JSON.stringify({
+        enabled: true,
+        models: ["gpt-6-astra", "openai/gpt-5.4", "/[/]gpt-6-sol$/"],
+      }),
+    );
+    for (const selected of [
+      { provider: "magpie", id: "codex/gpt-6-astra" },
+      { provider: "openai", id: "gpt-5.4" },
+      { provider: "proxy", id: "gpt-6-sol" },
+    ]) {
+      expect(transformRequest(state, selected, {})).toEqual({ service_tier: "priority" });
+    }
+    expect(transformRequest(state, { provider: "proxy", id: "gpt-5.4" }, {})).toBeUndefined();
+  });
   it.each([null, [], "text", 42, undefined])("ignores invalid payload %s", (payload) => {
     expect(transformRequest(active, model, payload)).toBeUndefined();
   });
@@ -69,10 +97,13 @@ describe("state persistence", () => {
       "magpie/codex/gpt-6-astra",
     ]);
   });
-  it.each(["{}", '{"enabled":"true","models":[]}', '{"enabled":true,"models":["bad"]}'])(
-    "rejects malformed state %s",
-    (text) => expect(() => decodeState(text)).toThrow(),
-  );
+  it.each([
+    "{}",
+    '{"enabled":"true","models":[]}',
+    '{"enabled":true,"models":[""]}',
+    '{"enabled":true,"models":["gpt 6"]}',
+    '{"enabled":true,"models":["openai/"]}',
+  ])("rejects malformed state %s", (text) => expect(() => decodeState(text)).toThrow());
   it.each(["/[invalid/", "/unfinished", "//", "/gpt/i"])(
     "rejects invalid regex rule %s",
     (rule) => {
